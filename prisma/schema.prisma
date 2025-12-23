@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String?
+  name           String
+  activityId     String
+  activity       Activity     @relation(fields: [activityId], references: [id])
+  isAdmin        Boolean      @default(false)
+  predictions    Prediction[]
+  totalPoints    Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Match {
+  id            String       @id @default(cuid())
+  teamA         String
+  teamB         String
+  matchDateTime DateTime
+  actualScoreA  Int?
+  actualScoreB  Int?
+  status        MatchStatus  @default(SCHEDULED)
+  predictions   Prediction[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Prediction {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  matchId           String
+  match             Match    @relation(fields: [matchId], references: [id])
+  predictedScoreA   Int
+  predictedScoreB   Int
+  pointsEarned      Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, matchId])
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LOCKED
+  COMPLETED
+  CANCELLED
+}
