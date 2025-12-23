@@ -2,16 +2,27 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import LoginPage from '@/components/LoginPage'
 import HomePage from '@/components/HomePage'
 
+function PageContent() {
+  const searchParams = useSearchParams()
+  const page = searchParams.get('page') || 'home'
+
+  return (
+    <HomePage
+      showPredictionsPage={page === 'predictions'}
+      showRankingsPage={page === 'rankings'}
+      showAdminPage={page === 'admin'}
+    />
+  )
+}
+
 export default function Home() {
   const { isAuthenticated } = useAuthStore()
-  const searchParams = useSearchParams()
   const [isClient, setIsClient] = useState(false)
-
-  const page = searchParams.get('page') || 'home'
 
   useEffect(() => {
     setIsClient(true)
@@ -26,10 +37,8 @@ export default function Home() {
   }
 
   return (
-    <HomePage
-      showPredictionsPage={page === 'predictions'}
-      showRankingsPage={page === 'rankings'}
-      showAdminPage={page === 'admin'}
-    />
+    <Suspense fallback={<div>Chargement...</div>}>
+      <PageContent />
+    </Suspense>
   )
 }
